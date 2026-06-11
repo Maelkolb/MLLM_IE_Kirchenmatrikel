@@ -1,0 +1,134 @@
+% !TeX program = pdflatex
+% Overleaf-ready. Klasse bei Bedarf gegen Konferenz-/Zeitschriftenvorlage tauschen.
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[ngerman]{babel}
+\usepackage{csquotes}
+\usepackage[style=authoryear,backend=biber]{biblatex}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\addbibresource{refs.bib}
+
+\title{MLLM-basierte Informationsextraktion aus historischen Kirchenbüchern:\\
+Eine Evaluation von Gemini~3.5~Flash gegen die Matrikel-Datenbank GenDB}
+\author{Tobias Perschl\\Universität Passau}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+% TODO: 150--250 Wörter. Kernaussagen: (1) Verkartungsdatenbanken wie GenDB
+% lassen sich als Gold Standard für die Evaluation multimodaler LLMs
+% zweckentfremden; (2) wir evaluieren Gemini 3.5 Flash auf der Extraktion
+% strukturierter Personendaten direkt aus Matrikel-Scans (Taufen, Heiraten,
+% Sterbefälle, 17.--19. Jh., Kurrent/Latein); (3) zentrale Ergebnisse
+% (Entry-Detection-F1, feldweise Accuracy/CER, Ablationen).
+\end{abstract}
+
+\section{Einleitung}
+% TODO: Motivation. Kirchenbücher als zentrale Quelle für Genealogie und
+% historische Demographie; manuelle Verkartung ist teuer; MLLMs versprechen
+% End-to-End-Extraktion ohne separates HTR/NER-Pipelining. Forschungsfrage:
+% Wie gut extrahiert ein multimodales LLM die Felder einer professionellen
+% Verkartung direkt aus dem Scan -- und was sagt der Vergleich über beide aus?
+% Beiträge: (1) reproduzierbare Korpus-Pipeline GenDB/Matricula,
+% (2) Evaluationsrahmen mit Entry-Alignment und feldsensitiver Bewertung,
+% (3) empirische Ergebnisse inkl. Ablationen, (4) methodische Reflexion
+% "Index vs. Quelle".
+
+\section{Forschungsstand}
+\subsection{HTR und Dokumentanalyse historischer Handschriften}
+% TODO: klassische Pipelines: Layoutanalyse + HTR + nachgelagerte IE.
+% Transkribus \parencite{muehlberger2019transforming}, TrOCR
+% \parencite{li2023trocr}, OCR-freie End-to-End-Modelle wie Donut
+% \parencite{kim2022donut}.
+\subsection{Multimodale LLMs für historische Dokumente}
+% TODO: jüngere Arbeiten zu LLM-/MLLM-Transkription historischer
+% Handschriften, z.\,B. \parencite{humphries2024unlocking}; Abgrenzung:
+% wir evaluieren nicht Transkription, sondern direkte schemabasierte
+% Informationsextraktion (Structured Output) gegen eine unabhängig
+% entstandene Verkartung.
+\subsection{Kirchenbuchdatenbanken als Forschungsdaten}
+% TODO: Matricula Online, GenDB (Bistumsarchiv Passau / FORWISS);
+% Verkartung vs. Transkription; bekannte Eigenschaften solcher Indizes
+% (Normalisierung, Schätzdaten, selektive Felder).
+
+\section{Daten}
+\subsection{GenDB und Matricula}
+% TODO: Beschreibung der Datenbank (Eintragstypen T/M/S, Feldschema),
+% Verknüpfung zu Matricula-Scans.
+\subsection{Korpuskonstruktion}
+Für jede ausgewählte Registerseite werden über die GenDB-Suchschnittstelle
+sämtliche verkarteten Einträge aller drei Eintragstypen abgefragt, mit dem
+zugehörigen Matricula-Scan verknüpft und in einem maschinenlesbaren Manifest
+zusammengeführt (ein Bild $\rightarrow$ $n$ Gold-Einträge).
+% TODO: Stichprobenziehung (Pfarreien, Zeiträume, Eintragstypen,
+% Tabellen- vs. Fließtextlayout), Korpusstatistik als Tabelle.
+\subsection{Eigenschaften des Gold Standards}
+Die Verkartung ist ein \emph{Index}, keine diplomatische Transkription: Felder
+können fehlen, obwohl die Information im Scan vorhanden ist (z.\,B. nur ein
+geschätztes Jahr trotz tagesgenauer Datumsangabe in der Quelle), und
+Schreibweisen können normalisiert sein. Die Evaluation bewertet daher
+ausschließlich Felder, die im Gold Standard belegt sind.
+
+\section{Methode}
+\subsection{Extraktion}
+Gemini~3.5~Flash erhält den Seitenscan und extrahiert Einträge per Structured
+Output gegen ein JSON-Schema, das die GenDB-Felder spiegelt. Zwei Settings:
+\emph{Page-Level} (alle Einträge einer Seite in einem Aufruf) und
+\emph{Entry-Level} (ein Eintrag pro Aufruf, lokalisiert über laufende Nummer
+bzw. Position). Experimentvariablen: \texttt{thinking\_level},
+\texttt{media\_resolution}, Few-Shot-Beispiele.
+\subsection{Alignment und Metriken}
+Im Page-Setting werden vorhergesagte und Gold-Einträge je Seite über eine
+gewichtete Ähnlichkeit (Namen, Brautnamen, Datum, Nummer, Eintragstyp;
+normalisiert über die im Gold belegten Anker) optimal 1:1 zugeordnet
+(ungarische Methode). Daraus ergeben sich Entry-Detection-Precision/-Recall/-F1
+(ungematchte Gold-Einträge = Misses, ungematchte Vorhersagen =
+Halluzinationen). Auf gematchten Paaren werden Felder bewertet: Namens- und
+Textfelder mit normalisiertem Exact Match und Character Error Rate, numerische
+und kategoriale Felder mit Accuracy; Datumsfelder zusätzlich getrennt für
+nicht-geschätzte Gold-Daten.
+
+\section{Ergebnisse}
+% TODO: Haupttabelle (Entry-Detection + feldweise Acc/CER, Page vs. Entry),
+% Ablationen (thinking_level, media_resolution, Few-Shot), Aufschlüsselung
+% nach Eintragstyp und Jahrhundert, qualitative Fehleranalyse mit Beispielen
+% aus comparisons_*.csv.
+\begin{table}[ht]
+\centering
+\caption{Feldweise Ergebnisse (Platzhalter).}
+\begin{tabular}{lrrr}
+\toprule
+Feld & $n$ & Accuracy & CER \\
+\midrule
+Nachname & -- & -- & -- \\
+Vorname & -- & -- & -- \\
+Jahr & -- & -- & -- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Diskussion}
+% TODO: (1) Wo scheitert das MLLM (Kurrent-Lesung, Spaltenzuordnung,
+% Eintragssegmentierung, Halluzinationen)? (2) Wo ist die Vorhersage
+% plausibel korrekt, aber der Index lückenhaft -- Umkehrung der
+% Gold-Standard-Annahme; Potenzial des MLLM zur Index-Anreicherung.
+% (3) Normalisierung vs. originalgetreue Schreibweise. (4) Kosten/Nutzen
+% gegenüber klassischen HTR-Pipelines. (5) Limitationen: Stichprobe,
+% nur ein Modell, Verkartungsqualität.
+
+\section{Fazit und Ausblick}
+% TODO.
+
+\section*{Daten- und Codeverfügbarkeit}
+Die vollständige Pipeline (Scraper, Extraktion, Evaluation) ist verfügbar
+unter \url{https://github.com/Maelkolb/gendb-mllm-ie}. % TODO: Repo-URL prüfen
+Bildrechte der Scans liegen bei Matricula Online bzw. den Archiven; das
+Korpus wird als Manifest (Seitenreferenzen + Verkartungsdaten) publiziert.
+
+\printbibliography
+\end{document}
